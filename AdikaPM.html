@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tetris</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 900px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+        
+        .game-board {
+            width: 300px;
+            height: 600px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #e94560;
+            display: grid;
+            grid-template-rows: repeat(20, 1fr);
+            grid-template-columns: repeat(10, 1fr);
+            gap: 1px;
+            padding: 2px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+        }
+        
+        .cell {
+            background-color: rgba(30, 30, 50, 0.8);
+            border-radius: 2px;
+        }
+        
+        .filled {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 200px;
+        }
+        
+        .panel-section {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #0f3460;
+        }
+        
+        h2 {
+            color: #0f3460;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+        
+        .next-piece {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+        }
+        
+        .score-display {
+            font-size: 1.8rem;
+            text-align: center;
+            color: #e94560;
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .key {
+            background: rgba(15, 52, 96, 0.7);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #ff6b81;
+            transform: translateY(-2px);
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none;
+        }
+        
+        .game-over h2 {
+            font-size: 3rem;
+            color: #e94560;
+            margin-bottom: 20px;
+        }
+        
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .side-panel {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-area">
+            <h1>TETRIS</h1>
+            <div class="game-board" id="board"></div>
+        </div>
+        
+        <div class="side-panel">
+            <div class="panel-section">
+                <h2>NEXT PIECE</h2>
+                <div class="next-piece" id="next-piece"></div>
+            </div>
+            
+            <div class="panel-section">
+                <h2>SCORE</h2>
+                <div class="score-display" id="score">0</div>
+            </div>
+            
+            <div class="panel-section">
+                <h2>CONTROLS</h2>
+                <div class="controls">
+                    <div class="control-row">
+                        <div class="key">←</div>
+                        <div class="key">→</div>
+                    </div>
+                    <div class="control-row">
+                        <div class="key">↓</div>
+                        <div class="key">SPACE</div>
+                    </div>
+                    <div class="control-row">
+                        <div class="key">Z</div>
+                        <div class="key">X</div>
+                    </div>
+                    <button id="start-btn">START GAME</button>
+                    <button id="pause-btn">PAUSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-over" id="game-over">
+        <h2>GAME OVER</h2>
+        <p>Your Score: <span id="final-score">0</span></p>
+        <button id="restart-btn">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        // Konstanta game
+        const ROWS = 20;
+        const COLS = 10;
+        const EMPTY = 0;
+        
+        // Bentuk-bentuk tetromino
+        const SHAPES = [
+            [],
+            [
+                [0, 0, 0, 0],
+                [1, 1, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ], // I
+            [
+                [2, 0, 0],
+                [2, 2, 2],
+                [0, 0, 0]
+            ], // J
+            [
+                [0, 0, 3],
+                [3, 3, 3],
+                [0, 0, 0]
+            ], // L
+            [
+                [4, 4],
+                [4, 4]
+            ], // O
+            [
+                [0, 5, 5],
+                [5, 5, 0],
+                [0, 0, 0]
+            ], // S
+            [
+                [0, 6, 0],
+                [6, 6, 6],
+                [0, 0, 0]
+            ], // T
+            [
+                [7, 7, 0],
+                [0, 7, 7],
+                [0, 0, 0]
+            ]  // Z
+        ];
+        
+        // Warna untuk setiap bentuk
+        const COLORS = [
+            '#000000',
+            '#00FFFF', // I - Cyan
+            '#0000FF', // J - Blue
+            '#FF7F00', // L - Orange
+            '#FFFF00', // O - Yellow
+            '#00FF00', // S - Green
+            '#800080', // T - Purple
+            '#FF0000'  // Z - Red
+        ];
+        
+        // Variabel game
+        let board = [];
+        let currentPiece = null;
+        let nextPiece = null;
+        let score = 0;
+        let gameOver = false;
+        let isPaused = false;
+        let dropInterval = 1000; // ms
+        let dropStart = Date.now();
+        
+        // Elemen DOM
+        const boardElement = document.getElementById('board');
+        const nextPieceElement = document.getElementById('next-piece');
+        const scoreElement = document.getElementById('score');
+        const startButton = document.getElementById('start-btn');
+        const pauseButton = document.getElementById('pause-btn');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-btn');
+        
+        // Inisialisasi papan permainan
+        function initBoard() {
+            board = [];
+            for (let r = 0; r < ROWS; r++) {
+                board[r] = [];
+                for (let c = 0; c < COLS; c++) {
+                    board[r][c] = EMPTY;
+                }
+            }
+            
+            // Buat grid untuk papan
+            boardElement.innerHTML = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.setAttribute('data-row', r);
+                    cell.setAttribute('data-col', c);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+        
+        // Buat grid untuk next piece
+        function initNextPieceDisplay() {
+            nextPieceElement.innerHTML = '';
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    nextPieceElement.appendChild(cell);
+                }
+            }
+        }
+        
+        // Buat piece baru secara acak
+        function createPiece() {
+            const pieceId = Math.floor(Math.random() * 7) + 1;
+            return {
+                shape: SHAPES[pieceId],
+                color: COLORS[pieceId],
+                row: 0,
+                col: Math.floor(COLS / 2) - Math.floor(SHAPES[pieceId][0].length / 2)
+            };
+        }
+        
+        // Gambar papan permainan
+        function drawBoard() {
+            const cells = document.querySelectorAll('#board .cell');
+            
+            // Reset semua sel
+            cells.forEach(cell => {
+                cell.style.backgroundColor = '';
+                cell.classList.remove('filled');
+            });
+            
+            // Gambar piece yang sudah ditempatkan
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (board[r][c] !== EMPTY) {
+                        const index = r * COLS + c;
+                        cells[index].style.backgroundColor = COLORS[board[r][c]];
+                        cells[index].classList.add('filled');
+                    }
+                }
+            }
+            
+            // Gambar piece saat ini
+            if (currentPiece) {
+                for (let r = 0; r < currentPiece.shape.length; r++) {
+                    for (let c = 0; c < currentPiece.shape[r].length; c++) {
+                        if (currentPiece.shape[r][c] !== EMPTY) {
+                            const boardRow = currentPiece.row + r;
+                            const boardCol = currentPiece.col + c;
+                            
+                            if (boardRow >= 0 && boardRow < ROWS && boardCol >= 0 && boardCol < COLS) {
+                                const index = boardRow * COLS + boardCol;
+                                cells[index].style.backgroundColor = currentPiece.color;
+                                cells[index].classList.add('filled');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Gambar next piece
+        function drawNextPiece() {
+            const cells = nextPieceElement.querySelectorAll('.cell');
+            
+            // Reset semua sel
+            cells.forEach(cell => {
+                cell.style.backgroundColor = '';
+                cell.classList.remove('filled');
+            });
+            
+            if (nextPiece) {
+                const offsetRow = Math.floor((4 - nextPiece.shape.length) / 2);
+                const offsetCol = Math.floor((4 - nextPiece.shape[0].length) / 2);
+                
+                for (let r = 0; r < nextPiece.shape.length; r++) {
+                    for (let c = 0; c < nextPiece.shape[r].length; c++) {
+                        if (nextPiece.shape[r][c] !== EMPTY) {
+                            const index = (r + offsetRow) * 4 + (c + offsetCol);
+                            cells[index].style.backgroundColor = nextPiece.color;
+                            cells[index].classList.add('filled');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Periksa tabrakan
+        function collision(piece, rowOffset = 0, colOffset = 0) {
+            for (let r = 0; r < piece.shape.length; r++) {
+                for (let c = 0; c < piece.shape[r].length; c++) {
+                    if (piece.shape[r][c] !== EMPTY) {
+                        const newRow = piece.row + r + rowOffset;
+                        const newCol = piece.col + c + colOffset;
+                        
+                        if (
+                            newRow >= ROWS || 
+                            newCol < 0 || 
+                            newCol >= COLS || 
+                            (newRow >= 0 && board[newRow][newCol] !== EMPTY)
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // Rotasi piece
+        function rotatePiece() {
+            if (!currentPiece || isPaused || gameOver) return;
+            
+            const oldShape = currentPiece.shape;
+            const newShape = [];
+            
+            // Buat matriks rotasi
+            for (let c = 0; c < oldShape[0].length; c++) {
+                newShape[c] = [];
+                for (let r = oldShape.length - 1; r >= 0; r--) {
+                    newShape[c][oldShape.length - 1 - r] = oldShape[r][c];
+                }
+            }
+            
+            const oldShapeBackup = currentPiece.shape;
+            currentPiece.shape = newShape;
+            
+            // Jika rotasi menyebabkan tabrakan, kembalikan ke bentuk semula
+            if (collision(currentPiece)) {
+                currentPiece.shape = oldShapeBackup;
+            } else {
+                drawBoard();
+            }
+        }
+        
+        // Gerakkan piece ke kiri
+        function moveLeft() {
+            if (!currentPiece || isPaused || gameOver) return;
+            
+            if (!collision(currentPiece, 0, -1)) {
+                currentPiece.col--;
+                drawBoard();
+            }
+        }
+        
+        // Gerakkan piece ke kanan
+        function moveRight() {
+            if (!currentPiece || isPaused || gameOver) return;
+            
+            if (!collision(currentPiece, 0, 1)) {
+                currentPiece.col++;
+                drawBoard();
+            }
+        }
+        
+        // Gerakkan piece ke bawah
+        function moveDown() {
+            if (!currentPiece || isPaused || gameOver) return;
+            
+            if (!collision(currentPiece, 1, 0)) {
+                currentPiece.row++;
+                drawBoard();
+                return true;
+            }
+            return false;
+        }
+        
+        // Jatuhkan piece langsung ke bawah (hard drop)
+        function hardDrop() {
+            if (!currentPiece || isPaused || gameOver) return;
+            
+            while (moveDown()) {
+                // Terus gerakkan ke bawah sampai tidak bisa lagi
+            }
+            lockPiece();
+        }
+        
+        // Kunci piece di tempatnya
+        function lockPiece() {
+            for (let r = 0; r < currentPiece.shape.length; r++) {
+                for (let c = 0; c < currentPiece.shape[r].length; c++) {
+                    if (currentPiece.shape[r][c] !== EMPTY) {
+                        const boardRow = currentPiece.row + r;
+                        const boardCol = currentPiece.col + c;
+                        
+                        if (boardRow >= 0) {
+                            // Dapatkan ID warna dari bentuk
+                            const colorId = SHAPES.findIndex(shape => 
+                                JSON.stringify(shape) === JSON.stringify(currentPiece.shape)
+                            );
+                            board[boardRow][boardCol] = colorId;
+                        }
+                    }
+                }
+            }
+            
+            // Periksa baris yang penuh
+            checkRows();
+            
+            // Buat piece baru
+            currentPiece = nextPiece;
+            nextPiece = createPiece();
+            drawNextPiece();
+            
+            // Periksa game over
+            if (collision(currentPiece)) {
+                gameOver = true;
+                showGameOver();
+            }
+        }
+        
+        // Periksa dan hapus baris yang penuh
+        function checkRows() {
+            let linesCleared = 0;
+            
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r].every(cell => cell !== EMPTY)) {
+                    // Hapus baris
+                    board.splice(r, 1);
+                    // Tambahkan baris kosong di atas
+                    board.unshift(Array(COLS).fill(EMPTY));
+                    linesCleared++;
+                    r++; // Periksa baris yang sama lagi karena baris di atasnya turun
+                }
+            }
+            
+            // Update skor
+            if (linesCleared > 0) {
+                // Sistem penilaian sederhana
+                const points = [0, 100, 300, 500, 800]; // Poin berdasarkan jumlah baris yang dihapus
+                score += points[linesCleared];
+                scoreElement.textContent = score;
+                
+                // Tingkatkan kecepatan setiap 1000 poin
+                if (score > 0 && score % 1000 === 0) {
+                    dropInterval = Math.max(100, dropInterval - 50);
+                }
+            }
+        }
+        
+        // Tampilkan layar game over
+        function showGameOver() {
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Mulai game
+        function startGame() {
+            if (gameOver) {
+                resetGame();
+            }
+            
+            initBoard();
+            initNextPieceDisplay();
+            
+            currentPiece = createPiece();
+            nextPiece = createPiece();
+            
+            score = 0;
+            scoreElement.textContent = score;
+            gameOver = false;
+            isPaused = false;
+            dropInterval = 1000;
+            
+            drawBoard();
+            drawNextPiece();
+            
+            gameOverScreen.style.display = 'none';
+            
+            // Mulai game loop
+            gameLoop();
+        }
+        
+        // Reset game
+        function resetGame() {
+            gameOver = false;
+            isPaused = false;
+            score = 0;
+            dropInterval = 1000;
+        }
+        
+        // Jeda/lanjutkan game
+        function togglePause() {
+            if (gameOver) return;
+            
+            isPaused = !isPaused;
+            pauseButton.textContent = isPaused ? 'RESUME' : 'PAUSE';
+        }
+        
+        // Game loop utama
+        function gameLoop() {
+            if (gameOver || isPaused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            const now = Date.now();
+            const delta = now - dropStart;
+            
+            if (delta > dropInterval) {
+                if (!moveDown()) {
+                    lockPiece();
+                }
+                dropStart = now;
+            }
+            
+            drawBoard();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners untuk tombol
+        startButton.addEventListener('click', startGame);
+        pauseButton.addEventListener('click', togglePause);
+        restartButton.addEventListener('click', startGame);
+        
+        // Event listeners untuk keyboard
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    moveLeft();
+                    break;
+                case 'ArrowRight':
+                    moveRight();
+                    break;
+                case 'ArrowDown':
+                    moveDown();
+                    break;
+                case ' ':
+                    hardDrop();
+                    break;
+                case 'z':
+                case 'Z':
+                    rotatePiece();
+                    break;
+                case 'x':
+                case 'X':
+                    // Rotasi searah jarum jam (tidak diimplementasikan di sini)
+                    break;
+                case 'p':
+                case 'P':
+                    togglePause();
+                    break;
+            }
+        });
+        
+        // Inisialisasi awal
+        initBoard();
+        initNextPieceDisplay();
+    </script>
+</body>
+</html>
